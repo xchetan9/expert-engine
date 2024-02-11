@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+
+    <div class='Helpers split left'>
+        <div class='tmdbss'>
+            <input type='text' name='' id='tmdbsrch' placeholder="MAL Search" /><button class="btn" id='tmdbsrch2' onclick="GetTMDB(document.getElementById('tmdbsrch').value)">Search</button>
+            <div id="TmdbResults"></div>
+        </div>
+    </div>
+        <div>
+            <h1>Anime Information Fetcher</h1>
+            <label for="mal_id">MAL ID:</label>
+            <input type="number" id="mal_id" name="mal_id"><br>
+            <label for="url">Url:</label>
+            <input type="text" id="url" name="url" required>
+            <br>
+            <label for="quality">Quality:</label>
+            <input type="text" id="quality" name="quality">
+            <br>
+            <label for="language">Language:</label>
+            <input type="text" id="language" name="language">
+            <br>
+            <button onclick="fetchAnimeInfo()">Fetch Anime Info</button>
+        </div>
+
+        <h1>Create New Post</h1>
+        <form onsubmit="handleSubmit(event)">
+            <label for="title">Title:</label><br>
+            <input type="text" id="title" name="title" required><br><br>
+    
+            <label for="content">Content:</label><br>
+            <textarea id="content" name="content" rows="5" required></textarea><br><br>
+    
+            <label for="category">Featured Image:</label><br>
+            <input type="text" id="category" name="category" required><br><br>
+    
+            <button type="submit">Create Post</button>
+        </form>
+
+
+    <script>
+        async function GetTMDB(x) {
+            const api_url = "https://api.jikan.moe/v4/anime?q=" + x;
+            const response = await fetch(api_url);
+            const data = await response.json();
+            console.log(data)
+            document.getElementById('tmdbsrch').remove();
+            document.getElementById('tmdbsrch2').remove();
+            for (i = 0; i < data.data.length; i++) {
+                var mydiv = document.createElement("div")
+                mydiv.classList = 'card'
+                sample = `
+    <div class="card__image-holder">
+      <img class="card__image" src="${data.data[i].images.jpg.large_image_url}" alt="wave" />
+    </div>
+    <div class="card-title">
+      <h2 onclick="getDetails('${data.data[i].mal_id}')" >
+        ${data.data[i].title}
+        <small>${data.data[i].year}</small>
+      </h2>
+    </div>
+`;
+                mydiv.innerHTML = sample
+                document.getElementById('TmdbResults').appendChild(mydiv);
+            };
+        }
+
+        function getDetails(x) {
+            document.getElementById('TmdbResults').remove()
+            document.getElementById('mal_id').value = x
+        }
+
+    </script>
+    <script>
+        function myredd(){
+            location.reload()
+        }
+        function copyToClipboard(elementId) {
+
+            // Create a "hidden" input
+            var aux = document.createElement("input");
+
+            // Assign it the value of the specified element
+            aux.setAttribute("value", document.getElementById(elementId).value);
+
+            // Append it to the body
+            document.body.appendChild(aux);
+
+            // Highlight its content
+            aux.select();
+
+            // Copy the highlighted text
+            document.execCommand("copy");
+            document.getElementById('Copybtn').innerHTML = 'Copied Sucessful'
+                // Remove it from the body
+            document.body.removeChild(aux);
+
+        }
+    </script>
+    <script>
+                function cleanUrl(url) {
+    let cleanedUrl = url.replace(/^https:\/\/www\.animekayo\.in\/p\//, "");
+    cleanedUrl = cleanedUrl.replace(/\.html$/, "");
+    return cleanedUrl;
+}
+
+
+        async function fetchAnimeInfo() {
+            let p = parseInt(document.getElementById('mal_id').value);
+            let quality = document.getElementById('quality').value;
+            let language = document.getElementById('language').value;
+            let url = document.getElementById('url').value;
+            let realurl  = cleanUrl(url);
+            ssssss = await fetch("/link/"+realurl);
+            let links = await ssssss.text();
+            let reqUrl = `https://api.jikan.moe/v4/anime/${p}/full`;
+
+            let headersList = {
+                "Accept": "*/*",
+                "User-Agent": "Thunder Client (https://www.thunderclient.com)"
+            };
+
+            fetch(reqUrl, {
+                method: "GET",
+                headers: headersList,
+            })
+            .then(response => response.json())
+            .then(response => {
+                let main = '';
+
+                let titlesYs = '';
+                for (let i of response['data']['titles']) {
+                    let x = `<p><b>${i['type']} : </b>${i['title']}</p><br />`;
+                    titlesYs = titlesYs + x;
+                }
+
+                let genress = '';
+                for (let i of response['data']['genres']) {
+                    let x = `<a href='/category/${i['name']}'>${i['name']} </a>`;
+                    genress = genress +" "+ x;
+                }
+
+                let xyx = response['data'];
+                let info = `
+                <h3 class='infoH3'>Series Info</h3>
+                <ul class='infoul'>
+                    <li><b>Other Title : </b>${xyx['title']}</li>
+                    <li><b>Type : </b>${xyx['type']}</li>
+                    <li><b>Source : </b>${xyx['source']}</li>
+                    <li><b>Status : </b>${xyx['status']}</li>
+                    <li><b>Episodes : </b>${xyx['episodes']}</li>
+                    <li><b>RunTime : </b>${xyx['duration']}</li>
+                    <li><b>Rating : </b>${xyx['rating']}</li>
+                    <li><b>Original Year : </b>${xyx['year']}</li>
+                    <li><b>Stars : </b>${xyx['score']}</li>
+                    <li><b>Quality : </b>${quality}</li>
+                    <li><b>Language : ${language}</b></li>
+                    <li><b>Genres : </b> ${genress}</li>
+                    <li><b>Encoder : </b> PureToons</li>
+                </ul>`;
+
+                let backg = `<h3>Background : </h3><p>${xyx['background']}</p>`;
+                let symp = `<h3>Plot : ${xyx['title_english']}</h3><p>${xyx['synopsis']}</p>`;
+                let image1 = `${xyx['images']['webp']['image_url']}`;
+                let imagex = `<img src='${xyx['images']['webp']['image_url']}' alt='image' loading='lazy'></img>`;
+                let image2 = `<img src='${xyx['trailer']['images']['image_url']}' alt='image' loading='lazy'></img>`;
+                let trailerYT = `<iframe src='${xyx['trailer']['embed_url']}' title='${xyx['title_english']}' frameborder='0'></iframe>`;
+
+                let tags = `<p class='httags'> ${xyx['title_english']} ${language} | ${xyx['title_english']} ${language} Free Download | ${xyx['title_english']} Download HD | ${xyx['title_english']} PureToons.com | ${xyx['title_english']} ${language} Free Download | ${xyx['title_english']} ${quality} | ${xyx['title_english']} ${language} ${quality} | ${xyx['title_english']} ${language} Direct Links | ${xyx['title_english']} ${language} Episodes | ${xyx['title_english']} ${language} Episodes free Download</p>`;
+
+                let dwnsec = `<h2 class='htdl'>${xyx['title_english']} Download ${language}</h2>`;
+
+                main = tags + backg + info + symp + "<hr />" + imagex+"<hr />"+dwnsec+"<hr />"+links;
+                document.getElementById('content').value = main;
+                document.getElementById('category').value = image1;
+                document.getElementById('title').value = xyx['title_english'] + language;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+
+
+    <script>
+        async function HTsentwp(title, mystring,img) {
+    let reqUrl = "https://puretoons.lol/wp-json/wp/v2/posts/";
+
+    let headersList = {
+        "Accept": "*/*",
+        "User-Agent": "Thunder Client (https://www.thunderclient.com)",
+        "Authorization": "Basic cHVyZXRvb25zOjk5NTUxMTQ0eHg=",
+        "Content-Type": "application/json"
+    };
+
+    let payload = JSON.stringify({
+        "title": title,
+        "content": mystring,
+        "categories": [0],
+        "fifu_image_url": img
+    });
+
+    try {
+        let response = await fetch(reqUrl, {
+            method: "POST",
+            headers: headersList,
+            body: payload
+        });
+        let responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Error:', error);
+        return null;
+    }
+}
+async function handleSubmit(event) {
+            event.preventDefault();
+            let title = document.getElementById('title').value;
+            let content = document.getElementById('content').value;
+            let image = document.getElementById('category').value;
+
+            let response = await HTsentwp(title, content, image);
+            if (response !== null) {
+                console.log("Post created successfully:", response);
+                alert("Post created successfully!");
+                location.reload();
+            } else {
+                console.error("Failed to create post.");
+                alert("Failed to create post.");
+            }
+        }
+
+
+    </script>
+<style>
+
+    /*
+ CSS for the main interaction
+*/
+
+.tabset>input[type="radio"] {
+    position: absolute;
+    left: -200vw;
+}
+
+.tabset .tab-panel {
+    display: none;
+}
+
+.tabset>input:first-child:checked~.tab-panels>.tab-panel:first-child,
+.tabset>input:nth-child(3):checked~.tab-panels>.tab-panel:nth-child(2),
+.tabset>input:nth-child(5):checked~.tab-panels>.tab-panel:nth-child(3),
+.tabset>input:nth-child(7):checked~.tab-panels>.tab-panel:nth-child(4),
+.tabset>input:nth-child(9):checked~.tab-panels>.tab-panel:nth-child(5),
+.tabset>input:nth-child(11):checked~.tab-panels>.tab-panel:nth-child(6) {
+    display: block;
+}
+
+
+/*
+   Styling
+  */
+
+body {
+    font: 16px/1.5em "Overpass", "Open Sans", Helvetica, sans-serif;
+    color: #333;
+    font-weight: 300;
+}
+
+.tabset>label {
+    position: relative;
+    display: inline-block;
+    padding: 15px 15px 25px;
+    border: 1px solid transparent;
+    border-bottom: 0;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.tabset>label::after {
+    content: "";
+    position: absolute;
+    left: 15px;
+    bottom: 10px;
+    width: 22px;
+    height: 4px;
+    background: #8d8d8d;
+}
+
+.tabset>label:hover,
+.tabset>input:focus+label {
+    color: #06c;
+}
+
+.tabset>label:hover::after,
+.tabset>input:focus+label::after,
+.tabset>input:checked+label::after {
+    background: #06c;
+}
+
+.tabset>input:checked+label {
+    border-color: #ccc;
+    border-bottom: 1px solid #fff;
+    margin-bottom: -1px;
+}
+
+.tab-panel {
+    padding: 30px 0;
+    border-top: 1px solid #ccc;
+}
+
+
+/*
+   Demo purposes only
+  */
+
+*,
+*:before,
+*:after {
+    box-sizing: border-box;
+}
+
+body {
+    padding: 30px;
+}
+
+.tabset {
+    max-width: 65em;
+}
+
+
+/* forms  */
+
+ul#website {
+    list-style: none;
+    display: list-item;
+    padding: 10px;
+}
+
+ul#website li {
+    padding: 10px;
+    font-size: x-large;
+    display: flex;
+}
+
+input {
+    font-size: larger;
+    padding: 5px;
+    margin: 10px;
+}
+
+input#submit {
+    font-size: x-large;
+    font-family: monospace;
+}
+
+.btn {
+    font-size: x-large;
+}
+
+div.cards {
+    margin: 80px auto;
+    max-width: 960px;
+    text-align: center;
+}
+
+div.card {
+    background: #ffffff;
+    display: inline-block;
+    margin: 10px;
+    max-width: 200px;
+    perspective: 1000;
+    position: relative;
+    text-align: left;
+    transition: all 0.3s 0s ease-in;
+    width: 200px;
+    z-index: 2;
+    margin-bottom: 0px;
+    border: black 1px solid;
+}
+
+div.card img {
+    max-width: 200px;
+}
+
+div.card .card__image-holder {
+    background: rgba(0, 0, 0, 0.1);
+    /* height: 0; */
+    /* padding-bottom: 75%; */
+}
+
+div.card div.card-title {
+    background: #d9d9d9;
+    padding: 6px 15px 10px;
+    /* position: absolute; */
+    /* z-index: 2; */
+}
+
+div.card div.card-title a.toggle-info {
+    border-radius: 32px;
+    height: 32px;
+    padding: 0;
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    width: 32px;
+}
+
+div.card div.card-title a.toggle-info span {
+    background: #ffffff;
+    display: block;
+    height: 2px;
+    position: absolute;
+    top: 16px;
+    transition: all 0.15s 0s ease-out;
+    width: 12px;
+}
+
+div.card div.card-title a.toggle-info span.left {
+    right: 14px;
+    transform: rotate(45deg);
+}
+
+div.card div.card-title a.toggle-info span.right {
+    left: 14px;
+    transform: rotate(-45deg);
+}
+
+div.card div.card-title h2 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    margin: 0;
+    padding: 0;
+}
+
+div.card div.card-title h2 small {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+}
+
+div.card div.card-description {
+    padding: 0 15px 10px;
+    position: relative;
+    font-size: 14px;
+}
+
+div.card div.card-actions {
+    box-shadow: 0 2px 0px 0 rgba(0, 0, 0, 0.075);
+    padding: 10px 15px 20px;
+    text-align: center;
+}
+
+div.card div.card-flap {
+    background: #d9d9d9;
+    position: absolute;
+    width: 100%;
+    transform-origin: top;
+    transform: rotateX(-90deg);
+}
+
+div.card div.flap1 {
+    transition: all 0.3s 0.3s ease-out;
+    z-index: -1;
+}
+
+div.card div.flap2 {
+    transition: all 0.3s 0s ease-out;
+    z-index: -2;
+}
+
+div.cards.showing div.card {
+    cursor: pointer;
+    opacity: 0.6;
+    transform: scale(0.88);
+}
+
+.no-touch div.cards.showing div.card:hover {
+    opacity: 0.94;
+    transform: scale(0.92);
+}
+
+div.card.show {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+}
+
+div.card.show div.card-title a.toggle-info {
+    background: #ff6666 !important;
+}
+
+div.card.show div.card-title a.toggle-info span {
+    top: 15px;
+}
+
+div.card.show div.card-title a.toggle-info span.left {
+    right: 10px;
+}
+
+div.card.show div.card-title a.toggle-info span.right {
+    left: 10px;
+}
+
+div.card.show div.card-flap {
+    background: #ffffff;
+    transform: rotateX(0deg);
+}
+
+div.card.show div.flap1 {
+    transition: all 0.3s 0s ease-out;
+}
+
+div.card.show div.flap2 {
+    transition: all 0.3s 0.2s ease-out;
+}
+</style>
+</body>
+</html>
