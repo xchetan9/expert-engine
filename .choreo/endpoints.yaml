@@ -1,0 +1,10 @@
+endpoints:
+  - name: index
+    path: /
+    method: GET
+    handler: app.index
+
+  - name: animekayo
+    path: /link/<url>
+    method: GET
+    handler: app.animekayo
